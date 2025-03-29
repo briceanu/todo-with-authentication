@@ -6,12 +6,15 @@ from typing import Annotated
 from models import User
 from . import todo_logic
 from sqlalchemy.exc import IntegrityError
-from schemas import TodoModelCreate, TodoModelUpdate, TodoModelResponse
+from schemas import (TodoModelCreate,
+                    TodoModelUpdate,
+                    TodoModelResponse,
+                    PaginationSchema
+            )
 import uuid
-from datetime import date
 import re
 router = APIRouter(prefix='/todo',tags=['all the routes for the todo'])
-
+from pydantic import Field
 
 @router.post('/create')
 async def create_a_todo(
@@ -35,11 +38,11 @@ async def create_a_todo(
 
 @router.get('/all')
 async def list_all_todos(
-
-    session:Session=Depends(get_db),
+            pagination:Annotated[PaginationSchema,Query()],
+            session:Session=Depends(get_db),
     ):
     try:
-        todo = todo_logic.list_all_todos(session)
+        todo = todo_logic.list_all_todos(pagination.page,pagination.number_of_items,session)
         return todo
 
  

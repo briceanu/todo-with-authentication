@@ -1,11 +1,11 @@
-from sqlalchemy.orm import Session, selectinload, joinedload
-from sqlalchemy import insert ,select, delete,update
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import insert ,select, delete
 from models import User
 from passlib.context import CryptContext
 from schemas import  (UserModelSignUp,
                        UserModelUpdate,
-         UpdatePassword, TodoModelResponse, UserModelResponse)
-from models import User,Todo
+         UpdatePassword)
+from models import User
 from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 import jwt
@@ -13,11 +13,15 @@ from datetime import timedelta, datetime, timezone
 from typing import Annotated
 from fastapi import Depends, HTTPException, status
 import os, shutil
+from fastapi.responses import FileResponse
+import urllib
+ 
+from config import settings
 
 pwd_context = CryptContext(schemes=['bcrypt'],deprecated='auto')
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/user/sign_in')
-SECRET_KEY = '2093jfmawj0d92093jf029)*)H)fj-290fsldifj3209jf'
-ALGORITHM = 'HS256'
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
 
  
 
@@ -145,3 +149,24 @@ def update_password(
     
 
 
+def download_img(session:Session,user:User):
+
+    stmt = select(User).where(User.username==user)
+    user = session.execute(stmt).scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f'no user with the username {user} found.')  
+
+
+    file_path = f'{user.user_img}' 
+
+    decoded_filename = urllib.parse.unquote(file_path)
+
+    file_extension = os.path.splitext(decoded_filename)[1] 
+    if not os.path.exists(file_path):
+        return {"error": "File not found"}
+
+    return FileResponse(path=file_path, filename=f'{user.username}_img{file_extension}', media_type="application/img")
+
+ 

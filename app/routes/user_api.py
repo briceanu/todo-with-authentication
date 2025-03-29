@@ -12,7 +12,8 @@ from models import User
 from typing import Annotated, List
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta, date
- 
+from fastapi.responses import FileResponse
+import os 
 
 router = APIRouter(prefix='/user',tags=['all the routes for the user'])
 
@@ -118,6 +119,27 @@ async def update_user_password(
                             detail='Invalid username or password',
                             headers={"WWW-Authenticate": "Bearer"})
         return user
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500,
+                            detail=f"An error occurred: {str(e)}")
+
+
+
+
+
+@router.get("/download")
+async def download_user_img(
+                            session:Session=Depends(get_db),
+                            user:User=Depends(user_logic.get_current_user)):
+    try:
+        img = user_logic.download_img(session,user)
+        if not img :
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail='Invalid username or password',
+                            headers={"WWW-Authenticate": "Bearer"})
+        return img
     except HTTPException:
         raise
     except Exception as e:

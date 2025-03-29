@@ -1,11 +1,12 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import insert,select,delete , and_, update, extract
+from sqlalchemy import insert,select, and_, update, extract
 from models import User, Todo
 from schemas import TodoModelCreate, TodoModelUpdate
 from fastapi.exceptions import HTTPException
 from fastapi import status
 import uuid
  
+
 
 def create_todo(
         user:User,
@@ -31,8 +32,12 @@ def create_todo(
 
 
 # logic for listing all the todos
-def list_all_todos(session:Session):
-    stmt = select(Todo)
+def list_all_todos(
+                   page:int,
+                   number_of_items:int,
+                   session:Session,):
+    offset = (page - 1) * number_of_items  # Correct calculation for pagination
+    stmt = select(Todo).limit(number_of_items).offset(offset)
     todos = session.execute(stmt).scalars().all()
     return todos
 
